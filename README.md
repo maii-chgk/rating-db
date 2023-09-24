@@ -39,6 +39,14 @@ DJANGO_SECRET_KEY=asdf
 
 For [rating-ui](https://github.com/maii-chgk/rating-ui) (web UI), you can either set the `DATABASE_URL` env variable (e.g., `DATABASE_URL=postgresql://postgres:password@localhost:5432/postgres rails s`) or update `config/database.yml`.
 
+## SQLite
+
+Alternatively, you can download sqlite databases:
+- https://pub-5200ce7fb4b64b5ea3b6b0b0f05cfcd5.r2.dev/YYYY-MM-DD_public.sqlite
+- https://pub-5200ce7fb4b64b5ea3b6b0b0f05cfcd5.r2.dev/YYYY-MM-DD_b.sqlite
+
+They are split by schema: `public` and `b` ([see below](#whats-in-there)). They will not work for running rating-b or rating-ui, but might be more suitable for ad-hoc data exploration.
+
 ## What’s in there
 
 Two schemas: `b` and `public`. `public` has data about tournaments, results, and rosters that we sync from [rating.chgk.info](https://rating.chgk.info). rating-b calculates ratings and stores them in the `b` schema.
