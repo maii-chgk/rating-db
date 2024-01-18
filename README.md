@@ -8,6 +8,12 @@ In this guide we explain how you can download and restore the ratings database. 
 
 Backups are available at https://pub-5200ce7fb4b64b5ea3b6b0b0f05cfcd5.r2.dev/YYYY-MM-DD_rating.backup (replace YYYY-MM-DD with a real date from the past 30 days).
 
+You can run `download.sh` to download a backup from yesterday to `rating.backup` (we create backups around 23:00 UTC, so a backup for today might not exist):
+
+```bash
+./download.sh
+```
+
 ### 2. Run `docker-compose up`
 
 Rename the downloaded file to `rating.backup` and put into the same folder as [`docker-compose.yml`](./docker-compose.yml) and [`restore.sh`](./restore.sh) from this repository. Optionally change user, password, and port variables in `docker-compose.yml` (e.g., if you run already a Postgres instance locally and want this container to use another port). 
