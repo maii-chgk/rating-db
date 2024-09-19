@@ -1,0 +1,77 @@
+name: Publish rating database schema image
+
+on:
+  workflow_dispatch
+
+env:
+  DOCKER_REPOSITORY: maiili
+  IMAGE_NAME: rating-db-schema
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Calculate yesterday’s date
+        id: date
+        run: echo "yesterday=$(date -d 'yesterday' +%Y-%m-%d)" >> $GITHUB_OUTPUT
+
+      - name: Create Dockerfile
+        run: |
+          cat << EOF > Dockerfile
+          FROM postgres:15
+          
+          RUN apt-get update && apt-get install -y wget
+          
+          ENV POSTGRES_DB=postgres
+          ENV POSTGRES_USER=postgres
+          ENV POSTGRES_PASSWORD=password
+          
+          COPY restore_and_truncate.sh /docker-entrypoint-initdb.d/
+          
+          RUN chmod +x /docker-entrypoint-initdb.d/restore_and_truncate.sh
+          EOF
+
+      - name: Create restore and truncate script
+        run: |
+          cat << EOF > restore_and_truncate.sh
+          #!/bin/bash
+          set -e
+          
+          wget https://pub-5200ce7fb4b64b5ea3b6b0b0f05cfcd5.r2.dev/${{ steps.date.outputs.yesterday }}_rating.backup -O /tmp/backup.backup
+          
+          pg_restore -U \$POSTGRES_USER -d \$POSTGRES_DB /tmp/backup.backup
+          
+          # Truncate tables in public and b schemas
+          psql -U \$POSTGRES_USER -d \$POSTGRES_DB << EOSQL
+          DO \$\$
+          DECLARE
+            schema_name text;
+            table_name text;
+          BEGIN
+            FOR schema_name IN ('public', 'b')
+            LOOP
+              FOR table_name IN (SELECT tablename FROM pg_tables WHERE schemaname = schema_name)
+              LOOP
+                EXECUTE 'TRUNCATE TABLE ' || schema_name || '.' || table_name || ' CASCADE';
+              END LOOP;
+            END LOOP;
+          END
+          \$\$;
+          EOSQL
+          
+          rm /tmp/backup.backup
+          EOF
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ env.DOCKER_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ steps.date.outputs.yesterday }}
