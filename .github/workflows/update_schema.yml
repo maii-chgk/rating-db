@@ -1,4 +1,4 @@
-name: DB Backup and Schema Update
+name: Update database schema
 
 on:
   workflow_dispatch:
@@ -18,7 +18,7 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: password
           POSTGRES_DB: postgres
         ports:
           - 5432:5432
