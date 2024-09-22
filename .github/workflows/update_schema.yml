@@ -43,11 +43,12 @@ jobs:
 
       - name: Restore backup
         run: |
-          PGPASSWORD=$PGPASSWORD pg_restore -h $PGHOST -U $PGUSER -d $PGDATABASE -c -v backup.backup
+          psql -U postgres -d postgres -c "DROP SCHEMA public CASCADE;"
+          pg_restore --dbname=postgres --username=postgres /backup/rating.backup
 
       - name: Fetch database schema
         run: |
-          PGPASSWORD=$PGPASSWORD pg_dump -h $PGHOST -U $PGUSER -d $PGDATABASE --schema-only --schema=public --schema=b > schema.sql
+          pg_dump -h $PGHOST -U $PGUSER -d $PGDATABASE --schema-only --schema=public --schema=b > schema.sql
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
