@@ -44,7 +44,7 @@ jobs:
       - name: Restore backup
         run: |
           psql -U postgres -d postgres -c "DROP SCHEMA public CASCADE;"
-          pg_restore --dbname=postgres --username=postgres /backup/rating.backup
+          pg_restore --dbname=postgres --username=postgres backup.backup
 
       - name: Fetch database schema
         run: |
