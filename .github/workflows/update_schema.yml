@@ -25,13 +25,14 @@ jobs:
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up PostgreSQL client
+      - name: Install PostgreSQL 15 client
         run: |
+          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
           sudo apt-get update
-          sudo apt-get install -y postgresql-client
+          sudo apt-get install -y postgresql-client-15
 
       - name: Calculate yesterday’s date
         id: date
@@ -50,10 +51,10 @@ jobs:
         run: |
           pg_dump -h $PGHOST -U $PGUSER -d $PGDATABASE --schema-only --schema=public --schema=b > schema.sql
 
-      - name: Create Pull Request
+      - name: Create PR
         uses: peter-evans/create-pull-request@v7
         with:
-          commit-message: Update database schema
+          commit-message: update database schema to ${{ steps.date.outputs.yesterday }}
           title: Update database schema
           body: |
             This PR updates the database schema based on the latest backup.
