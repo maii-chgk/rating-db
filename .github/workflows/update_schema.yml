@@ -1,0 +1,61 @@
+name: DB Backup and Schema Update
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update_schema:
+    runs-on: ubuntu-latest
+
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: password
+      PGDATABASE: postgres
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Calculate yesterday’s date
+        id: date
+        run: echo "yesterday=$(date -d 'yesterday' +%Y-%m-%d)" >> $GITHUB_OUTPUT
+
+      - name: Download Postgres backup
+        run: |
+          curl -o backup.backup "https://pub-5200ce7fb4b64b5ea3b6b0b0f05cfcd5.r2.dev/${{ steps.date.outputs.yesterday }}_rating.backup"
+
+      - name: Restore backup
+        run: |
+          PGPASSWORD=$PGPASSWORD pg_restore -h $PGHOST -U $PGUSER -d $PGDATABASE -c -v backup.backup
+
+      - name: Fetch database schema
+        run: |
+          PGPASSWORD=$PGPASSWORD pg_dump -h $PGHOST -U $PGUSER -d $PGDATABASE --schema-only --schema=public --schema=b > schema.sql
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: Update database schema
+          title: Update database schema
+          body: |
+            This PR updates the database schema based on the latest backup.
+            - Backup date: ${{ steps.date.outputs.yesterday }}
+          branch: update-schema
+          delete-branch: true
