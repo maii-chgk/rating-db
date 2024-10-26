@@ -1111,7 +1111,8 @@ CREATE TABLE public.true_dls (
     true_dl double precision,
     model_id bigint NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    team_id integer
 );
 
 
@@ -1875,6 +1876,13 @@ CREATE UNIQUE INDEX index_models_on_name ON public.models USING btree (name);
 --
 
 CREATE INDEX index_true_dls_on_model_id ON public.true_dls USING btree (model_id);
+
+
+--
+-- Name: index_true_dls_on_model_id_and_team_id_and_tournament_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX index_true_dls_on_model_id_and_team_id_and_tournament_id ON public.true_dls USING btree (model_id, team_id, tournament_id);
 
 
 --
